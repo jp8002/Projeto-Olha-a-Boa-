@@ -12,7 +12,11 @@ struct Cartela{
 		Numero numeros[5][5];
 		Cartela *nextNo;
 		int acertos = 0;
-		string colunas[5] = {"B","I","N","G","O"};
+		int colunas[5] = {-1,-1,-1,-1,-1};
+		int linhas[5] = {-1,-1,-1,-1,-1};
+		int linhas_saidas = 0;
+		int colunas_saidas = 0;
+		string letras[5] = {"B","I","N","G","O"};
 };
 struct Bingo{
 		Cartela *noIn = new Cartela;
@@ -37,6 +41,11 @@ void sortear(Bingo *);
 
 bool checar(Bingo *, int);
 
+void checar_linhas(Cartela *);
+
+void checar_colunas(Cartela *);
+
+bool in(int[], int posicao);
 
 
 int main(){
@@ -103,7 +112,13 @@ bool procura(Bingo *bingo, int random){
 }
 
 void procura_teste(Bingo *bingo, int random, int *posicao){
+	int linhas = 0;
+
 	for (int i = 0; i < 5; i++) {
+		if (in(bingo->noIn->linhas, i)) {
+			cout << "pula. linha " << i << endl;
+			continue;
+		}
 		for (int j = 0; j < 5; j++) {
 			if (random == bingo->noIn->numeros[i][j].num) {
 				cout << i << "||" << j << endl;
@@ -112,12 +127,20 @@ void procura_teste(Bingo *bingo, int random, int *posicao){
 			}
 		}
 	}
+
+	if (linhas == 5) {
+		cout << "LINHA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<< endl;
+		mostrar_cartela(*bingo->noIn);
+	}
+
+	
 	
 }
 
 void mostrar_cartela(Cartela cartela){
+	string teste;
 	for (int i = 0; i < 5; i++) {
-		cout << " " << cartela.colunas[i] << " | ";
+		cout << " " << cartela.letras[i] << " | ";
 	}
 
 	cout << "\n";
@@ -134,6 +157,8 @@ void mostrar_cartela(Cartela cartela){
 		
 		cout << "\n";
 	}
+
+	
 }
 
 
@@ -184,21 +209,88 @@ bool checar(Bingo *bingo ,int random){
 	int posicao[2] = {-1,-1};
 	procura_teste(bingo, random, posicao);
 
-	if(bingo->noIn->acertos == 24){
-		cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!BINGO" << endl;
-		return true;
-	}
-
 	
 
 	if (posicao[0] != -1)
 	{		
 			cout << "alocar em " << posicao[0] << " && " << posicao[1] << endl;
-			bingo->noIn->numeros[posicao[0]][posicao[1]].num = -1;
+			bingo->noIn->numeros[posicao[0]][posicao[1]].num = 99;
 			bingo->noIn->numeros[posicao[0]][posicao[1]].check = true;
 			bingo->noIn->acertos++;
 
 	}
+
+	if(bingo->noIn->acertos == 24){
+		cout << "BINGO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+		return true;
+	}
+
+	checar_linhas(bingo->noIn);
+	checar_colunas(bingo->noIn);
+
+	mostrar_cartela(*bingo->noIn);
+	cout<< "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<," <<bingo->noIn->acertos << endl;
 	return false;
+
+
+}
+
+bool in(int lista[5], int posicao){
+	for (int i = 0;  i < 5; i++) {
+		if (lista[i] == posicao) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void checar_linhas(Cartela *cartela){
+	int tempacertos = 0;
+
+	for (int i = 0; i < 5; i++) {
+		tempacertos = 0;
+		if (in(cartela->linhas, i)) {
+			continue;
+		}
+
+		for (int j = 0; j < 5; j++) {
+			if (cartela->numeros[i][j].check == true){
+				tempacertos++;
+			}
+		}
+
+		if (tempacertos == 5) {
+			int qtd = cartela->linhas_saidas;
+			cout << qtd << "LINHA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! [ " << i + 1 << " ]" << endl;
+			cartela->linhas[qtd] = i;
+			cartela->linhas_saidas++;
+		}
+	}
+
+}
+
+void checar_colunas(Cartela *cartela){
+	int tempacertos = 0;
+
+	for (int i = 0; i < 5; i++) {
+		tempacertos = 0;
+		if (in(cartela->colunas, i)) {
 			
+			continue;
+		}
+
+		for (int j = 0; j < 5; j++) {
+			if (cartela->numeros[j][i].check == true){
+				tempacertos++;
+			}
+		}
+
+		if (tempacertos == 5) {
+			int qtd = cartela->colunas_saidas;
+			cout << qtd << "COLUNA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! [ " << cartela->letras[i] << " ]" << endl;
+			cartela->colunas[qtd] = i;
+			cartela->colunas_saidas++;
+		}
+	}
+
 }
