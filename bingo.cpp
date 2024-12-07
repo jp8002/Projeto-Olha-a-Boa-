@@ -1,3 +1,7 @@
+//Sistema gerenciador de Cartelas de Bingo
+//Versão Final
+//Autor: João Pedro Pereira dos Santos
+
 #include <cstddef>
 #include <iostream>
 #include <time.h>
@@ -8,7 +12,7 @@ using namespace std;
 
 struct Acertos{
 	int quantidade = 0;
-	int acertados[25];
+	int acertados[24];
 };
 
 
@@ -38,17 +42,18 @@ struct Bingo{
 };
 
 void criar_cartelas(Bingo *);
+
 void preencher_cartela(Cartela *, int);
 
 void mostrar_cartela(Cartela , int);
 
 void escrever_cartela(Cartela);
 
-bool procura(Cartela *, int );
+bool procura_repeticao(Cartela *, int );
 
-void procura_teste(Cartela *, int, int *);
+void procura_sorteado(Cartela *, int, int *);
 
-bool checar(Cartela *, int, int);
+bool checar_sorteado(Cartela *, int, int);
 
 void checar_linhas(Cartela *);
 
@@ -75,18 +80,22 @@ int main(){
 		limpar();
 		cout << "+---------- Gerenciador de Bingo ---------+" << endl;
 		cout << "| 1 - Cadastrar Cartelas                  |" << endl;
-		if (bingo.noIn != NULL) {
-			cout << "| 2 - Marcar número                       |" << endl;
-			cout << "| 3 - Mostrar Cartelas                    |" << endl;
-			cout << "| 4 - Mostrar Números sorteados           |" << endl;
-		}
+		cout << "| 2 - Marcar número                       |" << endl;
+		cout << "| 3 - Mostrar Cartelas                    |" << endl;
+		cout << "| 4 - Mostrar Números sorteados           |" << endl;
 		cout << "| 5 - SAIR                                |" << endl;
+		cout << "+ Bingo Garantido em = " <<  75 - bingo.qtdSorteados  <<  "		  |" << endl;
 		cout << "+-----------------------------------------+" << endl;
 
 		cin >> escolha;
 		
 		switch(escolha){
 			case 1:{
+				if (bingo.noIn != NULL) {
+					cout << "Espere o fim da rodada para criar novas cartelas" << endl;
+					parar();
+					break;
+				}
 				cout << "Quantas cartelas você vai querer ?" <<endl;
 				cin >> bingo.nCartelas;
 
@@ -102,6 +111,12 @@ int main(){
 			}
 
 			case 2:{
+				if (bingo.noIn == NULL) {
+					cout << "Crie novas cartelas para começar." << endl;
+					parar();
+					break;
+				}
+
 				limpar();
 
 				cout << "Qual foi o número sorteado?" << endl;
@@ -125,7 +140,7 @@ int main(){
 				
 
 				limpar();
-				if(checar(bingo.noIn, sorteado, bingo.nCartelas)){
+				if(checar_sorteado(bingo.noIn, sorteado, bingo.nCartelas)){
 					do {
 						Cartela *temp = bingo.noIn->nextNo;
 						delete bingo.noIn;
@@ -137,6 +152,11 @@ int main(){
 				break;
 			}
 			case 3:{
+				if (bingo.noIn == NULL) {
+					cout << "Crie novas cartelas para começar." << endl;
+					parar();
+					break;
+				}
 				limpar();
 				mostrar_cartela(*bingo.noIn, bingo.nCartelas);
 				parar();
@@ -144,6 +164,11 @@ int main(){
 			}
 
 			case 4:{
+				if (bingo.noIn == NULL) {
+					cout << "Crie novas cartelas para começar." << endl;
+					parar();
+					break;
+				}
 				mostrar_sorteado(saidos, &bingo);
 				parar();
 				break;
@@ -157,6 +182,7 @@ int main(){
 						sorteado= 0;
 						bingo.qtdSorteados = 0;
 				}while (bingo.noIn != NULL);
+
 				break;
 			}
 
@@ -184,13 +210,11 @@ void criar_cartelas(Bingo *bingo){
 
 	
 	tempCartela->id = bingo->NOfiM->id+1;
-	cout << "id do proximo "<< tempCartela << endl;
 	bingo->NOfiM->nextNo = tempCartela;
 	bingo->NOfiM = tempCartela;
 }
 
 void preencher_cartela(Cartela *cartela, int max){
-	cout << max << endl;
 	if (max != 1) {
 		preencher_cartela(cartela->nextNo, --max );
 	}
@@ -209,7 +233,7 @@ void preencher_cartela(Cartela *cartela, int max){
 		j = 0;
 		while( j < 5){
 			random = minimo + (rand() % (limite - minimo) + 1);
-			if(procura(cartela, random) == true){
+			if(procura_repeticao(cartela, random) == true){
 				continue;
 			}
 
@@ -227,7 +251,6 @@ void preencher_cartela(Cartela *cartela, int max){
 			
 			j++;
 
-			cout << random << " ";
 		}
 		
 		limite += 15;
@@ -237,7 +260,7 @@ void preencher_cartela(Cartela *cartela, int max){
 	escrever_cartela(*cartela);
 }
 
-bool procura(Cartela *cartela, int random){
+bool procura_repeticao(Cartela *cartela, int random){
 	for (int i = 0; i < 5; i++) {
 		for (int j = 0; j < 5; j++) {
 			if (random == cartela->numeros[i][j].num) {
@@ -293,10 +316,6 @@ void escrever_cartela(Cartela cartela){
 	 if (!outFile) {
         cout << "Erro ao abrir o arquivo de saída." << endl;
     }
-    
-	// if (max != 1) {
-	// 	mostrar_cartela(*cartela.nextNo, --max);
-	// }
 
 	
 	for (int i = 0; i < 5; i++) {
@@ -322,20 +341,20 @@ void escrever_cartela(Cartela cartela){
 
 }
 
-bool checar(Cartela *cartela ,int random, int max){
+bool checar_sorteado(Cartela *cartela ,int random, int max){
 	if (max != 1) {
-		if (checar(cartela->nextNo, random, --max)){
+		if (checar_sorteado(cartela->nextNo, random, --max)){
 			return true;
 		}
 	}
 	int posicao[2] = {-1,-1};
-	procura_teste(cartela, random, posicao);
+	procura_sorteado(cartela, random, posicao);
 
 	
 	if (posicao[0] != -1)
 	{		
 			cout << "____________________________________________________________________________________________________________________________\n" << endl;
-			cout << "O número "<< random << " foi encontrado na Cartela " << cartela->id << " na coluna " << cartela->letras[posicao[1]] << " e na linha " << posicao[0] + 1<< endl;
+			cout << "O número "<< random << " foi encontrado na Cartela " << cartela->id << " na coluna " << cartela->letras[posicao[1]] << " e na linha " << posicao[0] + 1 << "\n"<< endl;
 			mostrar_cartela(*cartela, 1);
 			cartela->acertos.acertados[cartela->acertos.quantidade] = random;
 			cartela->numeros[posicao[0]][posicao[1]].num = 99;
@@ -345,28 +364,30 @@ bool checar(Cartela *cartela ,int random, int max){
 
 	}
 
+	checar_linhas(cartela);
+	checar_colunas(cartela);
+
 	if(cartela->acertos.quantidade == 23){
 		limpar();
 		cout << "OLHA A BOA !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!. NA cartela " << cartela->id << endl;
+		mostrar_cartela(*cartela, 1);
 		parar();
 	}
 
 	if(cartela->acertos.quantidade == 24){
 		limpar();
 		cout << "BINGO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!. NA cartela " << cartela->id << endl;
+		mostrar_cartela(*cartela, 1);
 		parar();
 		return true;
 	}
-
-	checar_linhas(cartela);
-	checar_colunas(cartela);
 
 	return false;
 
 
 }
 
-void procura_teste(Cartela *cartela, int random, int *posicao){
+void procura_sorteado(Cartela *cartela, int random, int *posicao){
 	int linhas = 0;
 
 	for (int i = 0; i < 5; i++) {
@@ -451,16 +472,10 @@ void checar_colunas(Cartela *cartela){
 
 void mostrar_sorteado(int lista[], Bingo *bingo){
 	Cartela *temp = bingo->noIn;
-	
-	cout << "Número sorteados: ";
-	for (int i = 0; i < bingo->qtdSorteados; i++) {
-		cout << lista[i] << ",";
-	}
-	cout << endl;
 
 	for (int i = 0; i < bingo->nCartelas ; i++) {
 		cout << "Caterla " << temp->id << " tem "<< temp->acertos.quantidade<<" sorteados : ";
-		bubblesort(temp->acertos.acertados, temp->acertos.quantidade);
+		bubblesort(temp->acertos.acertados, temp->acertos.quantidade - 1);
 		for (int j =0; j < temp->acertos.quantidade; j++) {
 			cout << temp->acertos.acertados[j] << ",";
 		}
@@ -468,6 +483,12 @@ void mostrar_sorteado(int lista[], Bingo *bingo){
 		temp = temp->nextNo;
 		cout << endl;
 	}
+
+	cout << "Número sorteados: ";
+	for (int i = 0; i < bingo->qtdSorteados; i++) {
+		cout << lista[i] << ",";
+	}
+	cout << endl;
 }
 
 void limpar(){
@@ -496,7 +517,7 @@ void bubblesort(int *lista, int qtd){
 	while (troca == true) {
 		troca = false;
 		for (int i = 0; i< end; i++) {
-				if (lista[i] > lista[i+1]){
+			if (lista[i] > lista[i+1]){
 				temp = lista[i];
 				lista[i] = lista[i+1];
 				lista[i + 1] = temp;
